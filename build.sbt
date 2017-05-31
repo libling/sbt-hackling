@@ -11,7 +11,7 @@ libraryDependencies ++= Seq(
 )
 
 bintrayPackageLabels := Seq("sbt","plugin")
-bintrayVcsUrl := Some("""git@github.com:jastice/sbt-hackling.git""")
+bintrayVcsUrl := Some("""https://github.com/libling/sbt-hackling.git""")
 
 initialCommands in console := """import libling._"""
 
