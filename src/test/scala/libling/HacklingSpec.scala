@@ -26,16 +26,35 @@ class HacklingSpec extends FlatSpec {
 
   "installSource" should "install sources into a directory" in {
     IO.withTemporaryDirectory { target =>
-      val revision = ObjectId.fromString(dependencyHash)
-      val repo = Git.open(localRepoDir)
-      val libTarget = target / dependencyHash
-      val installed = util.installSource(revision, repo, defaultPaths, libTarget)
+      val installed = installDepTo(target)
 
       assert(installed.nonEmpty)
       assert(util.installedLibs(target).contains(dependencyHash))
       val allInTarget = target.***.get
       assert(installed.forall(f => allInTarget contains f))
+      assert(installed.forall(_.isFile))
     }
+  }
+
+  it should "return installed sources when installing already installed dependency" in {
+    IO.withTemporaryDirectory { target =>
+      val installed1 = installDepTo(target)
+
+      val allInTarget = target.***.get
+
+      assert(installed1.forall(f => allInTarget contains f))
+
+      val installed2 = installDepTo(target)
+      assert(installed2.forall(f => allInTarget contains f))
+      assert(installed2.forall(f => installed1 contains f))
+    }
+  }
+
+  def installDepTo(target: File) = {
+    val revision = ObjectId.fromString(dependencyHash)
+    val repo = Git.open(localRepoDir)
+    val libTarget = target / dependencyHash
+    util.installSource(revision, repo, defaultPaths, libTarget)
   }
 
   "canResolve" should "resolve hashes when not yet in local cache" in {

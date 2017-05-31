@@ -81,22 +81,26 @@ object Hackling {
 
 object util {
 
-  def installSources(cache: File, target: File, liblingSubpaths: Seq[String], dependencies: Seq[VersionCached]): Seq[File] = {
+  val NormalFileFilter = new SimpleFileFilter(_.isFile)
+
+  def installSources(cache: File, target: File, liblingSubPaths: Seq[String], dependencies: Seq[VersionCached]): Seq[File] = {
 
     val hashes = dependencies.map(_.version.hash).toSet
     val installed = installedLibs(target).toSet
     val toRemove = (installed -- hashes).map(hash => target / hash)
     IO.delete(toRemove)
 
-    for {
+    val freshlyInstalled = for {
       VersionCached(VersionHash(hash), local) <- dependencies
       installTarget = target / hash
       if !installTarget.exists() // TODO should be verified as installed correctly
       localRepo = Git.open(local)
       objectId = ObjectId.fromString(hash)
       if canResolve(localRepo, objectId)
-      installed <- installSource(objectId, localRepo, liblingSubpaths, installTarget)
+      installed <- installSource(objectId, localRepo, liblingSubPaths, installTarget)
     } yield installed
+
+    target.**(NormalFileFilter).get
   }
 
   /** Currently installed liblings. */
