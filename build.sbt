@@ -1,6 +1,5 @@
  name := """sbt-hackling"""
 organization := "libling"
-version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.10.6"
 
@@ -12,7 +11,7 @@ libraryDependencies ++= Seq(
 )
 
 bintrayPackageLabels := Seq("sbt","plugin")
-bintrayVcsUrl := Some("""git@github.com:libling/sbt-hackling.git""")
+bintrayVcsUrl := Some("""git@github.com:jastice/sbt-hackling.git""")
 
 initialCommands in console := """import libling._"""
 
