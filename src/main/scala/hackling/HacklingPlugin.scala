@@ -164,9 +164,7 @@ object util {
   // maybe implement some archiver to go directly to files?
   org.eclipse.jgit.archive.ArchiveFormats.registerAll()
 
-  /**
-    * Install the source for a revision, given by hash string.
-    */
+  /** Install the source for a revision, given by hash string. */
   def installSource(revision: ObjectId, cachedRepo: Git, paths: Seq[String], target: File): Set[File] =
     IO.withTemporaryFile(target.getName,".zip") { tmp =>
       val out = new BufferedOutputStream(new FileOutputStream(tmp))
