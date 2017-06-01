@@ -16,11 +16,11 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     file("/Users/jast/workspace/libling-skeleton/").getCanonicalFile
   val remoteRepoURI = uri("https://github.com/libling/libling-skeleton.git")
 
-  def localDep(hash: String) = Dependency(Version(hash), Repository(localRepoDir.toURI))
+  def localDep(hash: String) = Dependency(Version(hash), Repositories(localRepoDir.toURI))
   val localDep1 = localDep(dependencyHash1)
   val localDep2 = localDep(dependencyHash2)
 
-  def remoteDep(hash: String) = Dependency(Version(hash), Repository(remoteRepoURI))
+  def remoteDep(hash: String) = Dependency(Version(hash), Repositories(remoteRepoURI))
   val remoteDep1 = remoteDep(dependencyHash1)
 
   override def beforeAll(): Unit = {

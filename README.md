@@ -7,7 +7,8 @@ Hackathon implementation of the Libling concept.
 
 ## Libling
 
-Libling is an alternative way to add dependencies to your project. It is intended for simple snippets of code or small libraries (for now).
+Libling is a way to add dependencies to your project as plain Scala sources. 
+It is intended for simple snippets of code or small libraries (for now).
 
 ## Motivation
 
@@ -53,8 +54,10 @@ some code gets dumped into your `/target/libling` directory and becomes part of 
     
 ## TODO
 
+* dependency lock file as part of the libling
 * transitive resolve of liblings, via dependency lock file
 * resolve commits by tags and branches
+* evicting conflicting revisions coming from the same tree
     
     
 ## Inspirations
