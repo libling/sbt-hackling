@@ -13,11 +13,9 @@ libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit.archive" % "4.7.0.201704051617-r"
 )
 
-//addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
-
-
 bintrayPackageLabels := Seq("sbt","plugin")
 bintrayVcsUrl := Some("""https://github.com/libling/sbt-hackling.git""")
+bintrayRepository := "sbt-plugins"
 
 initialCommands in console :=
   """
