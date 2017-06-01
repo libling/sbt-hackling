@@ -5,7 +5,10 @@ jdk:
 
 script:
   ## runs both regular tests and sbt-scripted integration tests
-  - sbt -Dfile.encoding=UTF8 test scripted publish
+  - sbt -Dfile.encoding=UTF8 test scripted
+
+after_success:
+  - $TRAVIS_BRANCH == "master" && sbt bintrayDumpCredentials publish
 
 sudo: false
 
@@ -25,3 +28,8 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+
+env:
+  global:
+    - BINTRAY_USER=jastice
+    - secure: iRV8die540aRbusVRhO5e+M/NB+EPaK83/yAFJZhBL5iujJQDF3WQIxfOThWPr+hIuLpr7Ah8tgP7IbKxgxn2fuekYbmqi+Ww8AXurymb7/Bd1dnzZ4Pl0YybCY1LRW7ucSaHBs1T3ymGJwgdCF77Jxn9LEn2n9eIBUEBz9XKlmkI6BVPbKixmUTapn7XyH13Y4+ziAVNxavin4xdpS67DYPK+7KyERUcLJ91iBHprdGFdROnh1CSNL9FM3JdR+sHOmxzKM8yZA62rMF1TCqNsmL3Pj8uYt4T6L3qjGzL5PkWCGPekaaxIg5N1XGYOp3OHkQX7tfn/U88Gh35aEBIZzEZfvATLmIs9sXSeBaQlnfZOexU17c/W1xgZ1gAA/wHQjpoyNjbOtFKS1gr/rW9OQDz5S360zDMCB3He2DjLOOFJuQdKE24VVj3JZdzcgrq0AOchGEYDrVHUVrAnJeQsKb8VYIjQG/iSTCUjG3BpBMpOP2Zp/OOSdppKNfVZ7xknPF5xkSey/NgUTtTvE6f9w6cBfIfl3nbV2biVrSiTHyTng9m338ynDIU9rL/dt5MBPe8Gq5cXrIqBbEJvi6Myjh9Hm/AmsuRX/ZX+BNCy+iM+oUuUYnbObR/D+KYcFkwq2luJL6QFcdb+fpcabAiKpOdKh2lSgccTYyYr70Ozw=

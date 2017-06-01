@@ -31,3 +31,24 @@ initialCommands in console :=
 ScriptedPlugin.scriptedSettings
 scriptedLaunchOpts ++=
   Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
+
+// silly bintray plugin doesn't have settings to set these things directly
+val bintrayDumpCredentials = taskKey[Boolean]("dump bintray credentials read from environment vars to file. For use in Travis")
+bintrayDumpCredentials := {
+  val dumped = for {
+    user <- sys.env.get("BINTRAY_USER")
+    key <- sys.env.get("BINTRAY_KEY")
+  } yield {
+    val credentials =
+      s"""
+        |realm = Bintray API Realm
+        |host = api.bintray.com
+        |user = $user
+        |password = $key
+      """.stripMargin
+
+    IO.write(bintrayCredentialsFile.value, credentials)
+  }
+
+  dumped.fold(false)(_ => true)
+}
