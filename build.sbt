@@ -18,6 +18,7 @@ licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"
 bintrayPackageLabels := Seq("sbt","plugin")
 bintrayVcsUrl := Some("""https://github.com/libling/sbt-hackling.git""")
 bintrayRepository := "sbt-plugins"
+bintrayOmitLicense := false
 
 initialCommands in console :=
   """
