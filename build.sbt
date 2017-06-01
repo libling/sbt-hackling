@@ -35,9 +35,12 @@ scriptedLaunchOpts ++=
 // silly bintray plugin doesn't have settings to set these things directly
 val bintrayDumpCredentials = taskKey[Boolean]("dump bintray credentials read from environment vars to file. For use in Travis")
 bintrayDumpCredentials := {
+  val userOpt = sys.env.get("BINTRAY_USER")
+  val keyOpt = sys.env.get("BINTRAY_KEY")
+
   val dumped = for {
-    user <- sys.env.get("BINTRAY_USER")
-    key <- sys.env.get("BINTRAY_KEY")
+    user <- userOpt
+    key <- keyOpt
   } yield {
     val credentials =
       s"""
@@ -50,5 +53,11 @@ bintrayDumpCredentials := {
     IO.write(bintrayCredentialsFile.value, credentials)
   }
 
-  dumped.fold(false)(_ => true)
+  dumped.fold {
+    val userDefined = "BINTRAY_USER " + userOpt.fold("UNDEFINED")(_=>"defined")
+    val keyDefined = "BINTRAY_KEY " + userOpt.fold("UNDEFINED")(_=>"defined")
+    streams.value.log.warn(s"dumping bintray credentials to ${bintrayCredentialsFile.value} failed. $userDefined, $keyDefined")
+    false
+  }(_ => true)
+
 }
