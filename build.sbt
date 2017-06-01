@@ -37,12 +37,9 @@ scriptedLaunchOpts ++=
 val bintrayDumpCredentials = taskKey[Boolean]("dump bintray credentials read from environment vars to file. For use in Travis.")
 bintrayDumpCredentials := {
 
-  val userKey = "BINTRAY_USER"
-  val keyKey = "BINTRAY_KEY"
-
   val dumped = for {
-    user <- sys.env.get(userKey)
-    key <- sys.env.get(keyKey)
+    user <- sys.env.get("BINTRAY_USER")
+    key <- sys.env.get("BINTRAY_KEY")
     if !bintrayCredentialsFile.value.isFile
   } yield {
     val credentials =
@@ -56,9 +53,6 @@ bintrayDumpCredentials := {
     IO.write(bintrayCredentialsFile.value, credentials)
   }
 
-  assert(
-    bintrayCredentialsFile.value.isFile,
-    s"bintray credentials not created. user:${sys.env.get(userKey).isDefined}, key:${sys.env.get(keyKey).isDefined}")
+  assert(bintrayCredentialsFile.value.isFile, s"Bintray credentials not created. Are BINTRAY_USER and BINTRAY_KEY defined?")
   dumped.fold(false)(_ => true)
-
 }
