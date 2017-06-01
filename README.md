@@ -1,3 +1,6 @@
+[![Gitter chat](https://badges.gitter.im/libling.svg)](https://gitter.im/libling/Lobby)
+[![Build Status](https://travis-ci.org/libling/sbt-hackling.svg?branch=master)](https://travis-ci.org/libling/sbt-hackling)
+
 # sbt-hackling
 
 Hackathon implementation of the Libling concept.
