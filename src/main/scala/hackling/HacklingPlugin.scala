@@ -39,7 +39,7 @@ object HacklingPlugin extends AutoPlugin {
 
   override lazy val projectSettings = Seq(
     sourceDependencies := Seq.empty,
-    sourceDependencyBase := sourceDirectory.value / "libling",
+    sourceDependencyBase := target.value / "libling",
 
     // only calculated on reload. kind of meh?
     managedSourceDirectories in Compile ++= ((sourceDependencyBase.value ** DirectoryFilter) / "src").get,
@@ -81,7 +81,8 @@ object Hackling {
 
 object util {
 
-  val NormalFileFilter = new SimpleFileFilter(_.isFile)
+  // TODO some more clever kind of file filter?
+  val SourceFileFilter = new SimpleFileFilter(f => f.isFile && f.name.endsWith(".scala"))
 
   def installSources(cache: File, target: File, liblingSubPaths: Seq[String], dependencies: Seq[VersionCached]): Seq[File] = {
 
@@ -100,7 +101,7 @@ object util {
       installed <- installSource(objectId, localRepo, liblingSubPaths, installTarget)
     } yield installed
 
-    target.**(NormalFileFilter).get
+    target.**(SourceFileFilter).get
   }
 
   /** Currently installed liblings. */
