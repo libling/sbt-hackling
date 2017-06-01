@@ -185,7 +185,9 @@ object util {
     for {
       Dependency(Version(hash), repo) <- deps
       // TODO some kind of resolve error instead of silent fail
-      local <- repo.gitRepos.iterator.map(inCache).find(cached => canResolve(Git.open(cached), ObjectId.fromString(hash)))
+      local <- repo.gitRepos.iterator
+        .map(inCache)
+        .find(cached => canResolve(Git.open(cached), ObjectId.fromString(hash)))
       // TODO transitive resolve
     } yield VersionCached(VersionHash(hash), local)
   }
