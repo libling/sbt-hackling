@@ -12,10 +12,10 @@ Libling is an alternative way to add dependencies to your project. It is intende
 ## Motivation
 
 * publishing simple libraries is unnecessarily hard in JVM land. why not just push to GitHub and be done with it?
-* even when code is source compatible with multiple Scala versions, need to crossbuild it for multiple scala versions
+* even when code is source compatible with multiple Scala versions, need to cross-build it for multiple scala versions
 * with scala.js and scala native, even more cross building is necessary
 * versioning is hacky. a git commit graph is closer to what's going on, a commit hash uniquely identifies a version and its history
-* take advantage of distributed VCS possibilities. cloning a repo mirrors all the versions so far, can be cashed. Does not require single source of truth centralized infrastructure such as Maven Central.
+* take advantage of distributed VCS possibilities. cloning a repo mirrors all the versions so far, can be cached. Does not require single source of truth centralized infrastructure such as Maven Central.
 
 ## To use a libling
 
