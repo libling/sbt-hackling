@@ -1,11 +1,13 @@
 package libling
 
 import hackling.Hackling._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 import hackling._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 import sbt._
+
+import scala.collection.immutable.Seq
 
 class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
 
@@ -35,18 +37,18 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
 
   "resolve" should "resolve a local git repo to its local address" in {
     IO.withTemporaryDirectory { cache =>
-      val cached = util.resolve(cache)(Seq(localDep1))
+      val cached = taskImpl.resolve(cache)(Seq(localDep1))
 
       assert(cached.nonEmpty)
       assert(cached.exists {
-        case VersionCached(VersionHash(hash), repoDir) => hash == dependencyHash1 && repoDir == localRepoDir
+        case VersionCached(VersionHash(hash), cacheRepoDir, _) => hash == dependencyHash1 && cacheRepoDir == localRepoDir
       })
     }
   }
 
   it should "resolve a remote git repo and cache it" in {
     IO.withTemporaryDirectory { cache =>
-      val cached = util.resolve(cache)(Seq(remoteDep1))
+      val cached = taskImpl.resolve(cache)(Seq(remoteDep1))
 
       val cacheContents = (cache * DirectoryFilter).get
       assert(cacheContents.nonEmpty)
@@ -66,7 +68,7 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
       val installed = installDepTo(target)
 
       assert(installed.nonEmpty)
-      assert(util.installedLibs(target).contains(dependencyHash1))
+      assert(taskImpl.installedLibs(target).contains(dependencyHash1))
       val allInTarget = target.***.get
       assert(installed.forall(f => allInTarget contains f))
       assert(installed.forall(_.isFile))
@@ -91,8 +93,8 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     IO.withTemporaryDirectory { temp =>
       val cache = temp / "cache"
       val target = temp / "target"
-      val cachedDeps = util.resolve(cache)(Seq(localDep1))
-      util.installSources(cache, target, defaultPaths, cachedDeps)
+      val cachedDeps = taskImpl.resolve(cache)(Seq(localDep1))
+      taskImpl.installSources(target, defaultPaths, cachedDeps)
       assert(cachedDeps.map(_.version.hash) contains dependencyHash1)
     }
   }
@@ -101,11 +103,11 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     IO.withTemporaryDirectory { temp =>
       val cache = temp / "cache"
       val target = temp / "target"
-      val cachedDeps = util.resolve(cache)(Seq(localDep1))
-      util.installSources(cache, target, defaultPaths, cachedDeps)
+      val cachedDeps = taskImpl.resolve(cache)(Seq(localDep1))
+      taskImpl.installSources(target, defaultPaths, cachedDeps)
       assert((target * dependencyHash1).get.nonEmpty)
 
-      util.installSources(cache, target, defaultPaths, Seq.empty)
+      taskImpl.installSources(target, defaultPaths, Seq.empty)
       assert((target * AllPassFilter).get.isEmpty)
     }
   }
@@ -114,12 +116,12 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     IO.withTemporaryDirectory { temp =>
       val cache = temp / "cache"
       val target = temp / "target"
-      val cachedDeps1 = util.resolve(cache)(Seq(localDep1))
-      util.installSources(cache, target, defaultPaths, cachedDeps1)
+      val cachedDeps1 = taskImpl.resolve(cache)(Seq(localDep1))
+      taskImpl.installSources(target, defaultPaths, cachedDeps1)
       assert((target * dependencyHash1).get.nonEmpty)
 
-      val cachedDeps2 = util.resolve(cache)(Seq(localDep2))
-      util.installSources(cache, target, defaultPaths, cachedDeps2)
+      val cachedDeps2 = taskImpl.resolve(cache)(Seq(localDep2))
+      taskImpl.installSources(target, defaultPaths, cachedDeps2)
       assert((target * dependencyHash1).get.isEmpty)
       assert((target * dependencyHash2).get.nonEmpty)
     }
@@ -129,7 +131,7 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     val revision = ObjectId.fromString(dependencyHash1)
     val repo = Git.open(localRepoDir)
     val libTarget = target / dependencyHash1
-    util.installSource(revision, repo, defaultPaths, libTarget)
+    taskImpl.installSource(repo, defaultPaths, revision, libTarget)
   }
 
   "canResolve" should "resolve hashes when not yet in local cache" in {

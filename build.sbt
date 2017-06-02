@@ -10,7 +10,8 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "com.typesafe" % "config" % "1.3.1",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
-  "org.eclipse.jgit" % "org.eclipse.jgit.archive" % "4.7.0.201704051617-r"
+  "org.eclipse.jgit" % "org.eclipse.jgit.archive" % "4.7.0.201704051617-r",
+  "org.slf4j" % "slf4j-simple" % "1.7.25" // just to get rid of annoying warning from jgit including slf4j
 )
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))

@@ -12,6 +12,7 @@ case class Version(hash: String)
 // a repository is one or more git repository urls
 case class Repositories private(gitRepos: Seq[URI])
 object Repositories {
+  def apply(gitRepos: URI*) = fromURIs(gitRepos.toVector)
   def fromURIs(gitRepos: Seq[URI]): Repositories =
     Repositories(gitRepos.map(_.normalize).toVector)
 }
