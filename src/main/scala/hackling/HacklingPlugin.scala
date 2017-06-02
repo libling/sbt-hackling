@@ -19,19 +19,28 @@ object HacklingPlugin extends AutoPlugin {
     val sourceDependencies = settingKey[Seq[Dependency]]("git repo dependencies")
     val sourceDependencyBase = settingKey[File]("where source dependencies end up in")
     val liblingCacheDirectory = settingKey[File]("local cache for libling dependency repos")
+
+    val liblingUpdate = taskKey[Seq[File]]("resolve source dependencies and generate lock file")
+    val liblingInstall = taskKey[Seq[File]]("install source dependencies to source dependency directory")
+    val liblingDependencies = taskKey[Seq[VersionCached]]("load all dependencies as resolved from the lock file and find a cached repo")
+  }
+
+  object internal {
+    // internal settings
     val liblingMetaDirectory = settingKey[File]("metadata directory for this libling")
     val liblingLockFile = settingKey[File]("libling lock file")
     val liblingMetaFile = settingKey[File]("libling metadata file")
     val liblingPaths = settingKey[Seq[String]]("paths to checkout for each libling")
 
-    val liblingUpdate = taskKey[Seq[File]]("resolve source dependencies and generate lock file")
-    val liblingResolve = taskKey[Seq[VersionCached]]("compute resolved hashes of source dependencies")
-    val liblingInstall = taskKey[Seq[File]]("install source dependencies to source dependency directory")
-    val liblingVerify = taskKey[Boolean]("verify that this project is a valid libling")
+    // internal tasks
+    val liblingResolve = taskKey[Seq[VersionCached]]("compute resolved hashes of source dependencies and transitive dependencies")
+    val liblingLock = taskKey[Lock]("dependency lock")
+    val liblingMeta = taskKey[Meta]("dependency metadata")
   }
 
 
   import autoImport._
+  import internal._
 
   override lazy val projectSettings = Seq(
     sourceDependencies := Seq.empty,
@@ -47,9 +56,14 @@ object HacklingPlugin extends AutoPlugin {
     liblingPaths := defaultPaths,
 
     liblingUpdate := taskImpl.updateLock(liblingLockFile.value, liblingMetaFile.value, liblingResolve.value),
-    // TODO this should be just reading stuff from the lock file / metadata
+    // consider: should install be doing the update as well?
+    liblingInstall := taskImpl.installSources(sourceDependencyBase.value, liblingPaths.value, liblingDependencies.value),
     liblingResolve := taskImpl.resolve(liblingCacheDirectory.value)(sourceDependencies.value),
-    liblingInstall := taskImpl.installSources(sourceDependencyBase.value, liblingPaths.value, liblingResolve.value),
+
+    liblingLock := locking.readLock(liblingLockFile.value),
+    liblingMeta := locking.readMeta(liblingMetaFile.value),
+    liblingDependencies := taskImpl.loadDependencies(liblingCacheDirectory.value, liblingLock.value, liblingMeta.value),
+
     sourceGenerators in Compile += liblingInstall.taskValue
   )
 

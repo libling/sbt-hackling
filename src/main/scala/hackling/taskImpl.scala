@@ -7,10 +7,27 @@ import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.transport.RefSpec
 import sbt._
+
 import scala.collection.immutable.Seq
 
 object taskImpl {
 
+  /** Load dependencies from lock with help from metadata. */
+  def loadDependencies(cache: File, lock: Lock, meta: Meta): Seq[VersionCached] = {
+    val findCached = findCachedRepo(cache) _
+
+    for {
+      version <- lock.hashes
+      repos = meta.index.get(version).map(_.gitRepos).getOrElse(Seq.empty)
+      // add all the meta.repos to lookup in case there's some orphan hash
+      lookup = repos ++ meta.repos
+      (cached,origin) <- findCached(version, lookup)
+    } yield {
+      // add resolved origin to the front because it's a place we're going to look up in cache first
+      val resultRepos = (origin +: repos).distinct
+      VersionCached(version, cached, Repositories.fromURIs(resultRepos))
+    }
+  }
 
   def updateLock(lockFile: File, metaFile: File, versions: Seq[VersionCached]): Seq[File] = {
     val locky = Lock.fromCached(versions)
@@ -37,7 +54,7 @@ object taskImpl {
       localRepo = Git.open(local)
       objectId = ObjectId.fromString(hash)
       if canResolve(localRepo, objectId)
-      installed <- installSource(objectId, localRepo, liblingSubPaths, installTarget)
+      installed <- installSource(localRepo, liblingSubPaths, objectId, installTarget)
     } yield installed
 
     (target ** SourceFileFilter).get.toVector
@@ -71,17 +88,6 @@ object taskImpl {
       .call()
   }
 
-  /**
-    * Find or fetch locally cached repo.
-    */
-  def cachedRepo(cache: File)(repo: URI): File = {
-    val local = localRepo(cache)(repo)
-
-    if (local.exists()) local
-    else downloadGitRepo(local)(repo)
-  }
-
-
   def downloadGitRepo(local: File)(repo: URI): File = {
 
     val clone = Git
@@ -104,7 +110,7 @@ object taskImpl {
   org.eclipse.jgit.archive.ArchiveFormats.registerAll()
 
   /** Install the source for a revision, given by hash string. */
-  def installSource(revision: ObjectId, cachedRepo: Git, paths: Seq[String], target: File): Set[File] =
+  def installSource(cachedRepo: Git, paths: Seq[String], revision: ObjectId, target: File): Set[File] =
     IO.withTemporaryFile(target.getName,".zip") { tmp =>
       val out = new BufferedOutputStream(new FileOutputStream(tmp))
 
@@ -122,15 +128,53 @@ object taskImpl {
   def resolve(cache: File)(deps: Seq[Dependency]): Seq[VersionCached] = {
     // TODO when resolving tags or branches, how to give preference to repos?
     // TagVersion could explicitly define git uri
-    val inCache = cachedRepo(cache) _
+    val findCached = findCachedRepo(cache) _
+    val transitive = transitiveResolve(cache) _
     for {
       Dependency(Version(hash), repo) <- deps
       // TODO some kind of resolve error instead of silent fail
-      (local, origin) <- repo.gitRepos.iterator
-        .map(r => (inCache(r), r))
-        .find { case (cached, _) => canResolve(Git.open(cached), ObjectId.fromString(hash)) }
-    // TODO transitive resolve
-    } yield VersionCached(VersionHash(hash), local, repo)
+      (local, _) <- findCached(VersionHash(hash), repo.gitRepos).toSeq
+      direct = VersionCached(VersionHash(hash), local, repo)
+      dep <- direct +: transitive(Git.open(local), ObjectId.fromString(hash))
+    } yield dep
+  }
+
+  def transitiveResolve(cache: File)(repo: Git, revision: ObjectId): Seq[VersionCached] = {
+    IO.withTemporaryFile("dependency-lock",".zip") { tmp =>
+      val out = new BufferedOutputStream(new FileOutputStream(tmp))
+      repo.archive().setFormat("zip").setTree(revision).setPaths("libling").setOutputStream(out).call
+
+      IO.withTemporaryDirectory { tmpLiblingDir =>
+        val files = IO.unzip(tmp, tmpLiblingDir)
+
+        val loadedDeps = for {
+          lock <- (files * "lock").get.map(locking.readLock)
+          // TODO meta isn't strictly necessary, but for now assume it is
+          meta <- (files * "meta").get.map(locking.readMeta)
+          loaded <- loadDependencies(cache, lock, meta)
+        } yield loaded
+
+        loadedDeps.toVector
+      }
+    }
+  }
+
+  def findCachedRepo(cache: File)(version: VersionHash, repoURIs: Seq[URI]): Option[(File,URI)] = {
+    val inCache = cachedRepo(cache) _
+
+    repoURIs
+      .toStream // so we only do expensive stuff lazily
+      .distinct // and only once
+      .map(r => (inCache(r), r))
+      .find { case (cached,_) => canResolve(Git.open(cached), ObjectId.fromString(version.hash)) }
+  }
+
+  /** Find or fetch locally cached repo. */
+  def cachedRepo(cache: File)(repo: URI): File = {
+    val local = localRepo(cache)(repo)
+
+    if (local.exists()) local
+    else downloadGitRepo(local)(repo)
   }
 
 }
