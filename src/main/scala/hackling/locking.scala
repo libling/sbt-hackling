@@ -68,12 +68,18 @@ object Meta {
   }
 
   def fromConfig(conf: Config): Meta = {
-    val repos = conf.getStringList(REPOS).asScala.map(uri).toVector
-    val indexConfig = conf.getConfigList(INDEX).asScala
+
+    val repos =
+      if(conf.hasPath(REPOS)) conf.getStringList(REPOS).asScala.map(uri).toVector
+      else Vector.empty
+
+    val indexConfig =
+      if (conf.hasPath(INDEX))
+        conf.getConfig(INDEX).entrySet().asScala.toVector
+      else Vector.empty
 
     val index = for {
-      c <- indexConfig
-      entry <- c.entrySet().asScala
+      entry <- indexConfig
     } yield {
       val hash = entry.getKey
       val repos =
@@ -105,8 +111,12 @@ object locking {
 
   def readLock(lockFile: File): Lock = {
     val lockConf = ConfigFactory.parseFile(lockFile)
-    val hashes = lockConf.getStringList(HASHES).asScala.map(VersionHash).sortBy(_.hash)
-    Lock.fromHashes(hashes.toVector)
+    if (lockConf.hasPath(HASHES)) {
+      val hashes = lockConf.getStringList(HASHES).asScala.map(VersionHash).sortBy(_.hash)
+      Lock.fromHashes(hashes.toVector)
+    } else {
+      Lock.fromHashes(Vector.empty)
+    }
   }
 
   def writeLock(lockFile: File, lock: Lock) = {

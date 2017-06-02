@@ -32,7 +32,7 @@ initialCommands in console :=
 // set up 'scripted; sbt plugin for testing sbt plugins
 ScriptedPlugin.scriptedSettings
 scriptedLaunchOpts ++=
-  Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
+  Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
 
 // silly bintray plugin doesn't have settings to set these things directly
 val bintrayDumpCredentials = taskKey[Boolean]("dump bintray credentials read from environment vars to file. For use in Travis.")

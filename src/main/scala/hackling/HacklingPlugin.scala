@@ -4,7 +4,8 @@ import hackling.Hackling._
 import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin
-import scala.collection.immutable.Seq
+
+import scala.collection.immutable
 
 object HacklingPlugin extends AutoPlugin {
 
@@ -13,16 +14,16 @@ object HacklingPlugin extends AutoPlugin {
 
   object autoImport {
     val Version = hackling.Version
-    val Repository = hackling.Repositories
+    val Repositories = hackling.Repositories
     val Dependency = hackling.Dependency
 
     val sourceDependencies = settingKey[Seq[Dependency]]("git repo dependencies")
     val sourceDependencyBase = settingKey[File]("where source dependencies end up in")
     val liblingCacheDirectory = settingKey[File]("local cache for libling dependency repos")
 
-    val liblingUpdate = taskKey[Seq[File]]("resolve source dependencies and generate lock file")
-    val liblingInstall = taskKey[Seq[File]]("install source dependencies to source dependency directory")
-    val liblingDependencies = taskKey[Seq[VersionCached]]("load all dependencies as resolved from the lock file and find a cached repo")
+    val liblingUpdate = taskKey[immutable.Seq[File]]("resolve source dependencies and generate lock file")
+    val liblingInstall = taskKey[immutable.Seq[File]]("install source dependencies to source dependency directory")
+    val liblingDependencies = taskKey[immutable.Seq[VersionCached]]("load all dependencies as resolved from the lock file and find a cached repo")
   }
 
   object internal {
@@ -30,10 +31,10 @@ object HacklingPlugin extends AutoPlugin {
     val liblingMetaDirectory = settingKey[File]("metadata directory for this libling")
     val liblingLockFile = settingKey[File]("libling lock file")
     val liblingMetaFile = settingKey[File]("libling metadata file")
-    val liblingPaths = settingKey[Seq[String]]("paths to checkout for each libling")
+    val liblingPaths = settingKey[immutable.Seq[String]]("paths to checkout for each libling")
 
     // internal tasks
-    val liblingResolve = taskKey[Seq[VersionCached]]("compute resolved hashes of source dependencies and transitive dependencies")
+    val liblingResolve = taskKey[immutable.Seq[VersionCached]]("compute resolved hashes of source dependencies and transitive dependencies")
     val liblingLock = taskKey[Lock]("dependency lock")
     val liblingMeta = taskKey[Meta]("dependency metadata")
   }
@@ -57,8 +58,8 @@ object HacklingPlugin extends AutoPlugin {
 
     liblingUpdate := taskImpl.updateLock(liblingLockFile.value, liblingMetaFile.value, liblingResolve.value),
     // consider: should install be doing the update as well?
-    liblingInstall := taskImpl.installSources(sourceDependencyBase.value, liblingPaths.value, liblingDependencies.value),
-    liblingResolve := taskImpl.resolve(liblingCacheDirectory.value)(sourceDependencies.value),
+    liblingInstall := taskImpl.installSources(sourceDependencyBase.value, liblingPaths.value.toVector, liblingDependencies.value),
+    liblingResolve := taskImpl.resolve(liblingCacheDirectory.value)(sourceDependencies.value.toVector),
 
     liblingLock := locking.readLock(liblingLockFile.value),
     liblingMeta := locking.readMeta(liblingMetaFile.value),

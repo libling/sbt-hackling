@@ -1,6 +1,15 @@
+-$ exists libling
 > sourceDependencies
 
-> liblingResolve
+# these should just give empty objects before liblingUpdate
+> liblingLock
+> liblingMeta
+
+-$ exists libling
+
+> liblingUpdate
+$ exists libling/lock
+$ exists libling/meta
 
 > liblingInstall
 $ exists target/libling/fb88386b4abf50155e637e81c4406b9297fd1bee
