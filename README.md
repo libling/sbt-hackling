@@ -46,13 +46,13 @@ Actually the latter two are the true motivation and the first three are a way to
 Add this plugin:
 
     resolvers += Resolver.bintrayIvyRepo("jastice","sbt-plugins")
-    addSbtPlugin("libling" % "sbt-hackling" % "0.2")
+    addSbtPlugin("libling" % "sbt-hackling" % "0.2.1")
 
 Add a libling source dependency:
        
     sourceDependencies += Dependency(
-            Version("<git commit hash>"), 
-            Repositories(uri("<git repository uri>")))
+            Version("<git commit long hash>"), 
+            Repositories(uri("<https git repository uri>")))
             
 On the sbt shell:
 
