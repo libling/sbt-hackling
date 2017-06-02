@@ -16,7 +16,7 @@ It is intended for simple snippets of code or small libraries (for now).
 * Even when code is source compatible with multiple Scala versions, need to cross-build it. Makes builds more complicated!
 * With scala.js and Scala Native, even more cross building is necessary!
 * Classical major.minor.bugfix versioning is a hack! A git commit graph is closer to what's going on, a commit hash uniquely identifies a version and its history.
-* take advantage of distributed VCS possibilities. cloning a repo mirrors all the versions so far, can be cached. Does not require single source of truth centralized infrastructure such as Maven Central.
+* take advantage of distributed VCS possibilities. Cloning a repo mirrors all the versions so far, can be cached. Does not require single-source-of-truth centralized infrastructure. This makes forking trivial.
 
 Actually the latter two are the true motivation and the first three are a way to justify a practical experiment
 
@@ -33,6 +33,13 @@ Actually the latter two are the true motivation and the first three are a way to
 * friendly version resolution via tags and branches
 * friendly DSL
 * finding and resolving dependency conflicts by eviction or something
+* a way to upgrade dependencies automatically
+
+## Not in scope
+
+* resolving binary dependencies. It's assumed a libling only depends on the Scala stdlib.
+* advanced builds. Liblings have a fixed structure and only depend on other liblings. 
+  But your build can depend on both liblings and regular binary libraries.
 
 ## To use a libling
 
