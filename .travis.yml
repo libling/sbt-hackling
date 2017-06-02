@@ -8,7 +8,7 @@ script:
   - sbt -Dfile.encoding=UTF8 test scripted bintrayDumpCredentials
 
 after_success:
-  - '[ $TRAVIS_BRANCH == "master" ] && sbt publish'
+  - '[[ $TRAVIS_BRANCH == "master" ]] || [[ $TRAVIS_BRANCH ~= ^v[\d.]+ ]] && sbt publish'
 
 sudo: false
 
