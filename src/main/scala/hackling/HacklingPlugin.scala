@@ -57,8 +57,10 @@ object HacklingPlugin extends AutoPlugin {
     liblingPaths := defaultPaths,
 
     liblingUpdate := taskImpl.updateLock(liblingLockFile.value, liblingMetaFile.value, liblingResolve.value),
-    // consider: should install be doing the update as well?
-    liblingInstall := taskImpl.installSources(sourceDependencyBase.value, liblingPaths.value.toVector, liblingDependencies.value),
+    liblingInstall := taskImpl.installSources(
+      sourceDependencyBase.value,
+      liblingPaths.value.toVector,
+      liblingDependencies.dependsOn(liblingUpdate).value),
     liblingResolve := taskImpl.resolve(liblingCacheDirectory.value)(sourceDependencies.value.toVector),
 
     liblingLock := locking.readLock(liblingLockFile.value),

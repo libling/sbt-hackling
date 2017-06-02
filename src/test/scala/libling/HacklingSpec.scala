@@ -15,18 +15,21 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
   val dependencyHash2 = "a8128545d8cf2169bf95c08d4c0de0bac4f4136f"
   // TODO include in project test/resources
   val localRepoDir = IO.createTemporaryDirectory.getCanonicalFile
-    file("/Users/jast/workspace/libling-skeleton/").getCanonicalFile
   val remoteRepoURI = uri("https://github.com/libling/libling-skeleton.git")
+
+  val remoteRepoWithDependenciesURI = uri("https://github.com/libling/libling-with-dependencies")
+  val dependencyHashInRepoWithDeps = "eb322e1d49604cf4d49986e14d0a0672d7c22094"
+  val dependencyHashTransitive = "ef33ab5a6eac7af6b2f6a8d238ccdc88e25171a2"
 
   def localDep(hash: String) = Dependency(Version(hash), Repositories(localRepoDir.toURI))
   val localDep1 = localDep(dependencyHash1)
   val localDep2 = localDep(dependencyHash2)
 
-  def remoteDep(hash: String) = Dependency(Version(hash), Repositories(remoteRepoURI))
-  val remoteDep1 = remoteDep(dependencyHash1)
+  def remoteDep(hash: String, uri: URI) = Dependency(Version(hash), Repositories(uri))
+  val remoteDep1 = remoteDep(dependencyHash1, remoteRepoURI)
+  val remoteDepWithDependencies = remoteDep(dependencyHashInRepoWithDeps, remoteRepoWithDependenciesURI)
 
   override def beforeAll(): Unit = {
-    println(s"using temporary local repository directory: $localRepoDir")
     Git.cloneRepository().setDirectory(localRepoDir).setURI(remoteRepoURI.toString).call()
     assert(localRepoDir.exists())
   }
@@ -59,8 +62,13 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     }
   }
 
-  it should "resolve the first git repo that contains the dependency hash" in {
-    // TODO
+  it should "resolve transitive dependencies" in {
+    IO.withTemporaryDirectory { cache =>
+      val cached = taskImpl.resolve(cache)(Seq(remoteDepWithDependencies))
+      val hashes = cached.map(_.version.hash)
+      assert(hashes.contains(dependencyHashInRepoWithDeps))
+      assert(hashes.contains(dependencyHashTransitive))
+    }
   }
 
   "installSource" should "install sources into a directory" in {

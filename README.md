@@ -12,7 +12,7 @@ It is intended for simple snippets of code or small libraries (for now).
 
 ## Motivation
 
-* publishing simple libraries is unnecessarily hard in JVM land. why not just push to GitHub and be done with it?
+* Publishing simple libraries is unnecessarily hard in JVM land. Why not just push to GitHub and be done with it?
 * even when code is source compatible with multiple Scala versions, need to cross-build it for multiple scala versions
 * with scala.js and scala native, even more cross building is necessary
 * versioning is hacky. a git commit graph is closer to what's going on, a commit hash uniquely identifies a version and its history

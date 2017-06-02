@@ -1,0 +1,11 @@
+> liblingUpdate
+> liblingInstall
+
+$ exists libling/lock
+$ exists libling/meta
+
+$ exists target/libling/eb322e1d49604cf4d49986e14d0a0672d7c22094
+$ exists target/libling/ef33ab5a6eac7af6b2f6a8d238ccdc88e25171a2
+
+> compile
+> run

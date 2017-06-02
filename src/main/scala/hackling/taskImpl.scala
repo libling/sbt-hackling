@@ -148,13 +148,12 @@ object taskImpl {
         val files = IO.unzip(tmp, tmpLiblingDir)
 
         val loadedDeps = for {
-          lock <- (files * "lock").get.map(locking.readLock)
+          lock <- (files find (_.name == "lock")).map(locking.readLock)
           // TODO meta isn't strictly necessary, but for now assume it is
-          meta <- (files * "meta").get.map(locking.readMeta)
-          loaded <- loadDependencies(cache, lock, meta)
-        } yield loaded
+          meta <- (files find (_.name == "meta")).map(locking.readMeta)
+        } yield loadDependencies(cache, lock, meta)
 
-        loadedDeps.toVector
+        loadedDeps.getOrElse(Seq.empty)
       }
     }
   }

@@ -12,4 +12,6 @@ $ exists libling/lock
 $ exists libling/meta
 
 > liblingInstall
-$ exists target/libling/fb88386b4abf50155e637e81c4406b9297fd1bee
+$ exists target/libling/ef33ab5a6eac7af6b2f6a8d238ccdc88e25171a2
+
+> compile
