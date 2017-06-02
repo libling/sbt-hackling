@@ -21,7 +21,6 @@ object HacklingPlugin extends AutoPlugin {
     val sourceDependencyBase = settingKey[File]("where source dependencies end up in")
     val liblingCacheDirectory = settingKey[File]("local cache for libling dependency repos")
 
-    val liblingUpdate = taskKey[immutable.Seq[File]]("resolve source dependencies and generate lock file")
     val liblingInstall = taskKey[immutable.Seq[File]]("install source dependencies to source dependency directory")
     val liblingDependencies = taskKey[immutable.Seq[VersionCached]]("load all dependencies as resolved from the lock file and find a cached repo")
   }
@@ -34,6 +33,7 @@ object HacklingPlugin extends AutoPlugin {
     val liblingPaths = settingKey[immutable.Seq[String]]("paths to checkout for each libling")
 
     // internal tasks
+    val liblingUpdate = taskKey[immutable.Seq[File]]("resolve source dependencies and generate lock file")
     val liblingResolve = taskKey[immutable.Seq[VersionCached]]("compute resolved hashes of source dependencies and transitive dependencies")
     val liblingLock = taskKey[Lock]("dependency lock")
     val liblingMeta = taskKey[Meta]("dependency metadata")
