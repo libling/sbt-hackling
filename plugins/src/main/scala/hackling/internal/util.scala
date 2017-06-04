@@ -1,8 +1,13 @@
-package hackling
+package hackling.internal
 
-import sbt.{File, URI}
+import java.io.File
+import java.net.URI
 
-object util {
+import ammonite.ops._
+
+private[hackling] object util {
+
+  def uri(string: String) = new URI(string)
 
   private val unsafeChars: Set[Char] = " %$&+,:;=?@<>#".toSet
   // Scala version of http://stackoverflow.com/questions/4571346/how-to-encode-url-to-avoid-special-characters-in-java/4605848#4605848

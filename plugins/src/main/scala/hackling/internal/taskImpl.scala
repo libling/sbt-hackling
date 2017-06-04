@@ -1,6 +1,8 @@
 package hackling
+package internal
 
-import java.io.{BufferedOutputStream, FileOutputStream}
+import java.io.{BufferedOutputStream, File, FileOutputStream}
+import java.net.URI
 
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.errors.MissingObjectException
@@ -10,7 +12,7 @@ import sbt._
 
 import scala.collection.immutable.Seq
 
-object taskImpl {
+private[hackling] object taskImpl {
 
   /** Load dependencies from lock with help from metadata. */
   def loadDependencies(cache: File, lock: Lock, meta: Meta): Seq[VersionCached] = {
@@ -37,31 +39,32 @@ object taskImpl {
     Seq(lockFile, metaFile)
   }
 
-  // TODO some more clever kind of file filter?
-  private val SourceFileFilter = new SimpleFileFilter(f => f.isFile && f.name.endsWith(".scala"))
+  private val ScalaFilter = new SimpleFileFilter(f => f.isFile && f.getName.endsWith(".scala"))
 
   def installSources(target: File, liblingSubPaths: Seq[String], dependencies: Seq[VersionCached]): Seq[File] = {
 
     val hashes = dependencies.map(_.version.hash).toSet
     val installed = installedLibs(target).toSet
     val toRemove = (installed -- hashes).map(hash => target / hash)
-    IO.delete(toRemove)
 
     val freshlyInstalled = for {
       VersionCached(VersionHash(hash), local, _) <- dependencies
       installTarget = target / hash
-      if !installTarget.exists() // TODO should be verified as installed correctly
+      if !installTarget.isDirectory
       localRepo = Git.open(local)
       objectId = ObjectId.fromString(hash)
       if canResolve(localRepo, objectId)
       installed <- installSource(localRepo, liblingSubPaths, objectId, installTarget)
     } yield installed
 
-    (target ** SourceFileFilter).get.toVector
+    IO.delete(toRemove)
+
+    (target ** ScalaFilter).get.toVector
   }
 
   /** Currently installed liblings. */
-  def installedLibs(base: File) = (base * DirectoryFilter).get.map(_.name)
+  private[hackling] def installedLibs(base: File) =
+    (base * DirectoryFilter).get.map(_.getName)
 
   def canResolve(repo: Git, revision: ObjectId): Boolean = {
 
@@ -110,8 +113,8 @@ object taskImpl {
   org.eclipse.jgit.archive.ArchiveFormats.registerAll()
 
   /** Install the source for a revision, given by hash string. */
-  def installSource(cachedRepo: Git, paths: Seq[String], revision: ObjectId, target: File): Set[File] =
-    IO.withTemporaryFile(target.getName,".zip") { tmp =>
+  private[hackling] def installSource(cachedRepo: Git, paths: Seq[String], revision: ObjectId, target: File): Set[File] =
+    IO.withTemporaryFile(target.getName, ".zip") { tmp =>
       val out = new BufferedOutputStream(new FileOutputStream(tmp))
 
       cachedRepo
@@ -148,9 +151,9 @@ object taskImpl {
         val files = IO.unzip(tmp, tmpLiblingDir)
 
         val loadedDeps = for {
-          lock <- (files find (_.name == "lock")).map(locking.readLock)
+          lock <- (files find (_.getName == "lock")).map(locking.readLock)
           // TODO meta isn't strictly necessary, but for now assume it is
-          meta <- (files find (_.name == "meta")).map(locking.readMeta)
+          meta <- (files find (_.getName == "meta")).map(locking.readMeta)
         } yield loadDependencies(cache, lock, meta)
 
         loadedDeps.getOrElse(Seq.empty)

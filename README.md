@@ -33,7 +33,9 @@ Actually the latter two are the true motivation and the first three are a way to
 * friendly version resolution via tags and branches
 * friendly DSL
 * finding and resolving dependency conflicts by eviction or something
+* resolving conflicts by rewriting packages
 * a way to upgrade dependencies automatically
+* automatic index of liblings with a task to publish a libling
 
 ## Not in scope
 
@@ -51,7 +53,7 @@ Add this plugin:
 Add a libling source dependency:
        
     sourceDependencies += Dependency(
-            Version("<git commit hash>"), 
+            Version("<git commit hash>"),
             Repositories(uri("<git repository uri>")))
             
 On the sbt shell:

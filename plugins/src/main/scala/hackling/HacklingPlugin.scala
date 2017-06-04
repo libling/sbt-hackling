@@ -1,6 +1,7 @@
 package hackling
 
 import hackling.Hackling._
+import hackling.internal.{Lock, Meta, locking, taskImpl}
 import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin

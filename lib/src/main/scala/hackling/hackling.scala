@@ -1,6 +1,8 @@
 package hackling
 
-import sbt.{File, URI}
+import java.io.File
+import java.net.URI
+
 import scala.collection.immutable.Seq
 
 object Hackling {

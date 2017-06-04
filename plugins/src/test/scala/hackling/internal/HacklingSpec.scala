@@ -1,11 +1,11 @@
-package libling
+package hackling
+package internal
 
 import hackling.Hackling._
-import hackling._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
-import sbt._
+import sbt.{uri, _}
 
 import scala.collection.immutable.Seq
 

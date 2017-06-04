@@ -1,6 +1,12 @@
-package hackling
+package hackling.internal
+
+import java.io.File
+import java.net.URI
+
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
-import sbt._
+import hackling._
+import hackling.internal.util._
+import sbt.IO
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
