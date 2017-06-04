@@ -27,17 +27,18 @@ object HacklingPlugin extends AutoPlugin {
   }
 
   object internal {
+    import KeyRanks.Invisible
     // internal settings
-    val liblingMetaDirectory = settingKey[File]("metadata directory for this libling")
-    val liblingLockFile = settingKey[File]("libling lock file")
-    val liblingMetaFile = settingKey[File]("libling metadata file")
-    val liblingPaths = settingKey[immutable.Seq[String]]("paths to checkout for each libling")
+    val liblingMetaDirectory = SettingKey[File]("liblingMetaDirectory", "metadata directory for this libling", Invisible)
+    val liblingLockFile = SettingKey[File]("liblingLockFile", "lock file for this libling", Invisible)
+    val liblingMetaFile = SettingKey[File]("liblingMetaFile", "metadata file for this libling", Invisible)
+    val liblingPaths = SettingKey[immutable.Seq[String]]("liblingPaths", "paths to checkout for each libling", Invisible)
 
     // internal tasks
-    val liblingUpdate = taskKey[immutable.Seq[File]]("resolve source dependencies and generate lock file")
-    val liblingResolve = taskKey[immutable.Seq[VersionCached]]("compute resolved hashes of source dependencies and transitive dependencies")
-    val liblingLock = taskKey[Lock]("dependency lock")
-    val liblingMeta = taskKey[Meta]("dependency metadata")
+    val liblingUpdate = TaskKey[immutable.Seq[File]]("liblingUpdate","resolve source dependencies and generate lock file", Invisible)
+    val liblingResolve = TaskKey[immutable.Seq[VersionCached]]("liblingResolve","compute resolved hashes of source dependencies and transitive dependencies", Invisible)
+    val liblingLock = TaskKey[Lock]("liblingLock", "dependency lock", Invisible)
+    val liblingMeta = TaskKey[Meta]("liblingMeta", "dependency metadata", Invisible)
   }
 
 
