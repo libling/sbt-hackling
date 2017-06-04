@@ -5,6 +5,8 @@
 
 Hackathon implementation of the Libling concept. It's a prototype. It works, but exactly what and how works might break at any time.
 
+This is an experimental platform. You are encouraged to submit changes. Almost anything will be accepted without much fuss.
+
 ## Libling
 
 Libling is a way to add dependencies to your project as plain Scala sources. 
@@ -36,10 +38,10 @@ Actually the latter two are the true motivation and the first three are a way to
 * resolving conflicts by rewriting packages
 * a way to upgrade dependencies automatically
 * automatic index of liblings with a task to publish a libling
+* (maybe) resolving binary dependencies. For now it's assumed a libling only depends on the Scala stdlib.
 
 ## Not in scope
 
-* resolving binary dependencies. It's assumed a libling only depends on the Scala stdlib.
 * advanced builds. Liblings have a fixed structure and only depend on other liblings. 
   But your build can depend on both liblings and regular binary libraries.
 
