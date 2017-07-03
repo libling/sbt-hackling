@@ -10,8 +10,10 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.transport.RefSpec
 import sbt._
 import hackling.internal.util._
+import org.eclipse.jgit.api.ListBranchCommand.ListMode
 
 import scala.collection.immutable.Seq
+import scala.collection.JavaConverters._
 
 private[hackling] object taskImpl {
 
@@ -23,12 +25,13 @@ private[hackling] object taskImpl {
       version <- lock.hashes
       repos = meta.index.get(version).map(_.gitRepos).getOrElse(Seq.empty)
       // add all the meta.repos to lookup in case there's some orphan hash
+      // TODO this doesn't seem efficient and maybe not all that useful yet?
       lookup = repos ++ meta.repos
-      (cached,origin) <- findCached(version, lookup)
+      resolved <- findCached(version, Repositories.fromURIs(lookup))
     } yield {
       // add resolved origin to the front because it's a place we're going to look up in cache first
-      val resultRepos = (origin +: repos).distinct
-      VersionCached(version, cached, Repositories.fromURIs(resultRepos))
+      val resultRepos = (resolved.origin.gitRepos ++ repos).distinct
+      VersionCached(version, resolved.file, Repositories.fromURIs(resultRepos))
     }
   }
 
@@ -49,14 +52,13 @@ private[hackling] object taskImpl {
     val toRemove = (installed -- hashes).map(hash => target / hash)
 
     for {
-      VersionCached(HashVersion(hash), local, _) <- dependencies
-      installTarget = target / hash
+      VersionCached(version, local, _) <- dependencies
+      installTarget = target / version.hash
       if !installTarget.isDirectory
       installed <- withRepo(local) { localRepo =>
-        val objectId = ObjectId.fromString(hash)
-        if (canResolve(localRepo, objectId))
-          installSource(localRepo, liblingSubPaths, objectId, installTarget)
-        else Set.empty[File]
+        resolvedHashVersion(localRepo, version.hash)
+          .map { objectId => installSource(localRepo, liblingSubPaths, objectId, installTarget) }
+          .getOrElse(Set.empty[File])
       }
     } yield installed
 
@@ -69,18 +71,55 @@ private[hackling] object taskImpl {
   private[hackling] def installedLibs(base: File) =
     (base * DirectoryFilter).get.map(_.getName)
 
-  def canResolve(repo: Git, revision: ObjectId): Boolean = {
+  def resolvedVersion(repo: Git, version: Version): Option[HashVersion] = {
 
-    def checkIfRevisionExists = try {
-      repo.log().add(revision).setMaxCount(1).call.iterator().hasNext
-    } catch {
-      case _: MissingObjectException => false
+    val existingRevision = version match {
+      case HashVersion(hash) =>
+        // try lookup without update first
+        resolvedHashVersion(repo, hash)
+          .orElse {
+            updateRepo(repo) // try one more time after a repo update
+            resolvedHashVersion(repo, hash)
+          }
+      case NameVersion(name) =>
+        updateRepo(repo) // branches are unstable refs, so update right away
+        resolvedNameVersion(repo, name)
     }
 
-    checkIfRevisionExists || {
-      updateRepo(repo)
-      // try again after a repo update
-      checkIfRevisionExists
+    existingRevision
+      .map(objId => HashVersion(objId.getName))
+  }
+
+  def resolvedHashVersion(repo: Git, hash: String): Option[ObjectId] = {
+    try {
+      val objId = ObjectId.fromString(hash)
+      if (repo.log().add(objId).setMaxCount(1).call.iterator().hasNext)
+        Option(objId)
+      else None
+    } catch {
+      case _: MissingObjectException => None
+    }
+  }
+
+  def resolvedNameVersion(git: Git, name: String): Option[ObjectId] = {
+      val tagList = git.tagList().call().asScala
+      val branchList = git.branchList().setListMode(ListMode.ALL).call().asScala
+
+      (tagList ++ branchList)
+        .find { ref => matchesName(ref.getName, name) }
+        .flatMap { ref =>
+          val peeled = git.getRepository.peel(ref.getLeaf)
+          Option(peeled.getPeeledObjectId)
+            .orElse(Option(peeled.getObjectId))
+        }
+  }
+
+  def matchesName(refName: String, lookingForName: String): Boolean = {
+    refName != null && {
+      val stripped = refName.stripPrefix("refs/")
+        .stripPrefix("heads/")
+        .stripPrefix("tags/")
+      stripped == lookingForName
     }
   }
 
@@ -92,8 +131,6 @@ private[hackling] object taskImpl {
       .setCheckFetchedObjects(true)
       .setRefSpecs(heads,tags)
       .call()
-
-    repo.close()
   }
 
   def downloadGitRepo(local: File)(repo: URI): File = {
@@ -136,15 +173,14 @@ private[hackling] object taskImpl {
 
   def resolve(cache: File)(deps: Seq[Dependency]): Seq[VersionCached] = {
     // TODO when resolving tags or branches, how to give preference to repos?
-    // TagVersion could explicitly define git uri
+    // TagVersion could explicitly define git uri?
     val findCached = findCachedRepo(cache) _
     val transitive = transitiveResolve(cache) _
     for {
-      Dependency(HashVersion(hash), repo) <- deps
+      dep <- deps
       // TODO some kind of resolve error instead of silent fail
-      (local, _) <- findCached(HashVersion(hash), repo.gitRepos).toSeq
-      direct = VersionCached(HashVersion(hash), local, repo)
-      dep <- direct +: withRepo(local) { git => transitive(git, ObjectId.fromString(hash)) }
+      direct <- findCached(dep.version, dep.repositories).toSeq
+      dep <- direct +: withRepo(direct.file) { git => transitive(git, ObjectId.fromString(direct.version.hash)) }
     } yield dep
   }
 
@@ -167,18 +203,19 @@ private[hackling] object taskImpl {
     }
   }
 
-  def findCachedRepo(cache: File)(version: HashVersion, repoURIs: Seq[URI]): Option[(File,URI)] = {
+  def findCachedRepo(cache: File)(version: Version, repos: Repositories): Option[VersionCached] = {
     val inCache = cachedRepo(cache) _
 
-    repoURIs
-      .toStream // expensive stuff should be done lazily
-      .distinct // and only once
-      .map(r => (inCache(r), r))
-      .find { case (cached,_) =>
+    repos.gitRepos.distinct.toStream
+      .flatMap { uri =>
+        val cached = inCache(uri)
         withRepo(cached) { git =>
-          canResolve(git, ObjectId.fromString(version.hash))
-        }
+          resolvedVersion(git, version)
+        }.map { ver =>
+          VersionCached(ver, cached, Repositories(uri))
+        }.toStream
       }
+      .headOption
   }
 
   /** Find or fetch locally cached repo. */

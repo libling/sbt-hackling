@@ -32,7 +32,6 @@ Actually the latter two are the true motivation and the first three are a way to
 
 ## Still kind of missing features
 
-* friendly version resolution via tags and branches
 * friendly DSL
 * finding and resolving dependency conflicts by eviction or something
 * resolving conflicts by rewriting packages
@@ -50,13 +49,19 @@ Actually the latter two are the true motivation and the first three are a way to
 Add this plugin:
 
     resolvers += Resolver.bintrayIvyRepo("jastice","sbt-plugins")
-    addSbtPlugin("libling" % "sbt-hackling" % "0.2.1")
+    addSbtPlugin("libling" % "sbt-hackling" % "0.3.0")
 
-Add a libling source dependency:
+Add a libling source dependency by commit hash:
        
     sourceDependencies += Dependency(
             HashVersion("<git commit long hash>"),
-            Repositories(uri("<https git  repository uri>")))
+            Repositories(uri("<https git repository uri>")))
+            
+Add a libling source dependency by tag or branch name:
+       
+    sourceDependencies += Dependency(
+            NameVersion("<tag or branch>"),
+            Repositories(uri("<https git repository uri>")))
             
 On the sbt shell:
 

@@ -17,7 +17,6 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
   // TODO include in project test/resources
   val localRepoDir = IO.createTemporaryDirectory.getCanonicalFile
   val remoteRepoURI = uri("https://github.com/libling/libling-skeleton.git")
-
   val remoteRepoWithDependenciesURI = uri("https://github.com/libling/libling-with-dependencies")
   val dependencyHashInRepoWithDeps = "eb322e1d49604cf4d49986e14d0a0672d7c22094"
   val dependencyHashTransitive = "ef33ab5a6eac7af6b2f6a8d238ccdc88e25171a2"
@@ -27,8 +26,9 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
   val localDep2 = localDep(dependencyHash2)
 
   def remoteDep(hash: String, uri: URI) = Dependency(HashVersion(hash), Repositories(uri))
+  def remoteDepNamed(name: String, uri: URI) = Dependency(NameVersion(name), Repositories(uri))
+
   val remoteDep1 = remoteDep(dependencyHash1, remoteRepoURI)
-  val remoteDepWithDependencies = remoteDep(dependencyHashInRepoWithDeps, remoteRepoWithDependenciesURI)
 
   override def beforeAll(): Unit = {
     Git.cloneRepository().setDirectory(localRepoDir).setURI(remoteRepoURI.toString).call()
@@ -66,11 +66,35 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
   }
 
   it should "resolve transitive dependencies" in {
+    val remoteDepWithDependencies = remoteDep(dependencyHashInRepoWithDeps, remoteRepoWithDependenciesURI)
+
     IO.withTemporaryDirectory { cache =>
       val cached = taskImpl.resolve(cache)(Seq(remoteDepWithDependencies))
       val hashes = cached.map(_.version.hash)
       assert(hashes.contains(dependencyHashInRepoWithDeps))
       assert(hashes.contains(dependencyHashTransitive))
+    }
+  }
+
+  it should "resolve a hash by tag" in {
+    val remoteDepTag = remoteDepNamed("v0.2.1", remoteRepoURI)
+    val remoteDepTagHash = "ad1b54018eb97da360fe19f7ccb2b43ed42b700d"
+
+    IO.withTemporaryDirectory { cache =>
+      val cached = taskImpl.resolve(cache)(Seq(remoteDepTag))
+      val hashes = cached.map(_.version.hash)
+      assert(hashes.contains(remoteDepTagHash))
+    }
+  }
+
+  it should "resolve a hash by branch name" in {
+    val remoteDepBranch = remoteDepNamed("skeleton-in-cellar", remoteRepoURI)
+    val remoteDepBranchHash = "ef33ab5a6eac7af6b2f6a8d238ccdc88e25171a2"
+
+    IO.withTemporaryDirectory { cache =>
+      val cached = taskImpl.resolve(cache)(Seq(remoteDepBranch))
+      val hashes = cached.map(_.version.hash)
+      assert(hashes.contains(remoteDepBranchHash))
     }
   }
 
@@ -143,10 +167,6 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     val repo = Git.open(localRepoDir)
     val libTarget = target / dependencyHash1
     taskImpl.installSource(repo, defaultPaths, revision, libTarget)
-  }
-
-  "canResolve" should "resolve hashes when not yet in local cache" in {
-//    fail("not implemented")
   }
 
 }
