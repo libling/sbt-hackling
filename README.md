@@ -50,7 +50,7 @@ Actually the latter two are the true motivation and the first three are a way to
 Add this plugin:
 
     resolvers += Resolver.bintrayIvyRepo("jastice","sbt-plugins")
-    addSbtPlugin("libling" % "sbt-hackling" % "0.3.0")
+    addSbtPlugin("libling" % "sbt-hackling" % "0.3.1")
 
 Add a libling source dependency by commit hash:
        
