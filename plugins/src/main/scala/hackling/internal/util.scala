@@ -3,8 +3,6 @@ package hackling.internal
 import java.io.File
 import java.net.URI
 
-import ammonite.ops._
-
 private[hackling] object util {
 
   def uri(string: String) = new URI(string)

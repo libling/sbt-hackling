@@ -45,8 +45,7 @@ val plugins = project
       "com.typesafe" % "config" % "1.3.1",
       "org.eclipse.jgit" % "org.eclipse.jgit" % jgitVersion,
       "org.eclipse.jgit" % "org.eclipse.jgit.archive" % jgitVersion,
-      "org.slf4j" % "slf4j-simple" % "1.7.25", // just to get rid of annoying warning from jgit including slf4j
-      "com.lihaoyi" %% "ammonite-ops" % "0.9.9"
+      "org.slf4j" % "slf4j-simple" % "1.7.25" // just to get rid of annoying warning from jgit including slf4j
     )
   )
 
