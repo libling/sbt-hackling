@@ -12,14 +12,14 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
 
 /** Libling lockfile. Only the current state of the lock file is the source for dependency hashes. */
-case class Lock private(hashes: Seq[VersionHash])
+case class Lock private(hashes: Seq[HashVersion])
 object Lock {
   def fromCached(resolved: Seq[VersionCached]): Lock = {
     // TODO add/check hash of hashes before writing anything
     val hashes = resolved.map(_.version).sortBy(_.hash)
     Lock(hashes)
   }
-  def fromHashes(hashes: Seq[VersionHash]): Lock = {
+  def fromHashes(hashes: Seq[HashVersion]): Lock = {
     val sortedHashes = hashes.sortBy(_.hash)
     Lock(sortedHashes)
   }
@@ -30,7 +30,7 @@ object Lock {
   * and an index where to find hashes.
   * May be updated independently from lock, e.g. to add repos and mappings.
   */
-case class Meta private(repos: Seq[URI], index: Map[VersionHash, Repositories]) {
+case class Meta private(repos: Seq[URI], index: Map[HashVersion, Repositories]) {
   import Meta._
 
   def toConfig: Config = {
@@ -39,7 +39,7 @@ case class Meta private(repos: Seq[URI], index: Map[VersionHash, Repositories]) 
     val reposConf = ConfigValueFactory.fromIterable(repoList.asJava)
 
     val indexMap = index.map {
-      case (VersionHash(hash), Repositories(uris)) =>
+      case (HashVersion(hash), Repositories(uris)) =>
         (hash, uris.map(util.normalizedUriString).asJava)
     }.asJava
 
@@ -93,7 +93,7 @@ object Meta {
           .asInstanceOf[java.util.List[String]].asScala
           .map(uri)
 
-      (VersionHash(hash), Repositories.fromURIs(repos.toVector))
+      (HashVersion(hash), Repositories.fromURIs(repos.toVector))
     }
 
     Meta(repos, index.toMap)
@@ -118,7 +118,7 @@ object locking {
   def readLock(lockFile: File): Lock = {
     val lockConf = ConfigFactory.parseFile(lockFile)
     if (lockConf.hasPath(HASHES)) {
-      val hashes = lockConf.getStringList(HASHES).asScala.map(VersionHash).sortBy(_.hash)
+      val hashes = lockConf.getStringList(HASHES).asScala.map(HashVersion).sortBy(_.hash)
       Lock.fromHashes(hashes.toVector)
     } else {
       Lock.fromHashes(Vector.empty)

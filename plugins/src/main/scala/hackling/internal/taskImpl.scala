@@ -9,6 +9,7 @@ import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.transport.RefSpec
 import sbt._
+import hackling.internal.util._
 
 import scala.collection.immutable.Seq
 
@@ -47,14 +48,16 @@ private[hackling] object taskImpl {
     val installed = installedLibs(target).toSet
     val toRemove = (installed -- hashes).map(hash => target / hash)
 
-    val freshlyInstalled = for {
-      VersionCached(VersionHash(hash), local, _) <- dependencies
+    for {
+      VersionCached(HashVersion(hash), local, _) <- dependencies
       installTarget = target / hash
       if !installTarget.isDirectory
-      localRepo = Git.open(local)
-      objectId = ObjectId.fromString(hash)
-      if canResolve(localRepo, objectId)
-      installed <- installSource(localRepo, liblingSubPaths, objectId, installTarget)
+      installed <- withRepo(local) { localRepo =>
+        val objectId = ObjectId.fromString(hash)
+        if (canResolve(localRepo, objectId))
+          installSource(localRepo, liblingSubPaths, objectId, installTarget)
+        else Set.empty[File]
+      }
     } yield installed
 
     IO.delete(toRemove)
@@ -81,7 +84,7 @@ private[hackling] object taskImpl {
     }
   }
 
-  def updateRepo(repo: Git) = {
+  def updateRepo(repo: Git): Unit = {
     // TODO what if there's other repos than "origin"?
     val heads = new RefSpec("refs/heads/*:refs/remotes/origin/*")
     val tags = new RefSpec("refs/tags/*:refs/remotes/origin/tags/*")
@@ -89,6 +92,8 @@ private[hackling] object taskImpl {
       .setCheckFetchedObjects(true)
       .setRefSpecs(heads,tags)
       .call()
+
+    repo.close()
   }
 
   def downloadGitRepo(local: File)(repo: URI): File = {
@@ -101,6 +106,7 @@ private[hackling] object taskImpl {
       .call()
 
     assert(local.exists())
+    clone.close()
 
     local
   }
@@ -134,11 +140,11 @@ private[hackling] object taskImpl {
     val findCached = findCachedRepo(cache) _
     val transitive = transitiveResolve(cache) _
     for {
-      Dependency(Version(hash), repo) <- deps
+      Dependency(HashVersion(hash), repo) <- deps
       // TODO some kind of resolve error instead of silent fail
-      (local, _) <- findCached(VersionHash(hash), repo.gitRepos).toSeq
-      direct = VersionCached(VersionHash(hash), local, repo)
-      dep <- direct +: transitive(Git.open(local), ObjectId.fromString(hash))
+      (local, _) <- findCached(HashVersion(hash), repo.gitRepos).toSeq
+      direct = VersionCached(HashVersion(hash), local, repo)
+      dep <- direct +: withRepo(local) { git => transitive(git, ObjectId.fromString(hash)) }
     } yield dep
   }
 
@@ -161,21 +167,25 @@ private[hackling] object taskImpl {
     }
   }
 
-  def findCachedRepo(cache: File)(version: VersionHash, repoURIs: Seq[URI]): Option[(File,URI)] = {
+  def findCachedRepo(cache: File)(version: HashVersion, repoURIs: Seq[URI]): Option[(File,URI)] = {
     val inCache = cachedRepo(cache) _
 
     repoURIs
-      .toStream // so we only do expensive stuff lazily
+      .toStream // expensive stuff should be done lazily
       .distinct // and only once
       .map(r => (inCache(r), r))
-      .find { case (cached,_) => canResolve(Git.open(cached), ObjectId.fromString(version.hash)) }
+      .find { case (cached,_) =>
+        withRepo(cached) { git =>
+          canResolve(git, ObjectId.fromString(version.hash))
+        }
+      }
   }
 
   /** Find or fetch locally cached repo. */
   def cachedRepo(cache: File)(repo: URI): File = {
     val local = localRepo(cache)(repo)
 
-    if (local.exists()) local
+    if (local.exists()) local // TODO check for validity or something
     else downloadGitRepo(local)(repo)
   }
 

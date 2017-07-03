@@ -14,7 +14,10 @@ object HacklingPlugin extends AutoPlugin {
   override def requires = JvmPlugin
 
   object autoImport {
-    val Version = hackling.Version
+    type Version = hackling.Version
+    val HashVersion = hackling.HashVersion
+    val TagVersion = hackling.NameVersion
+
     val Repositories = hackling.Repositories
     val Dependency = hackling.Dependency
 

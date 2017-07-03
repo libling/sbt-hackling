@@ -3,6 +3,8 @@ package hackling.internal
 import java.io.File
 import java.net.URI
 
+import org.eclipse.jgit.api.Git
+
 private[hackling] object util {
 
   def uri(string: String) = new URI(string)
@@ -67,4 +69,11 @@ private[hackling] object util {
   }
 
   def normalizedUriString(uri: URI) = uri.normalize().toASCIIString
+
+  def withRepo[T](location: File)(f: Git => T): T = {
+    val git = Git.open(location)
+    val t = f(git)
+    git.close()
+    t
+  }
 }

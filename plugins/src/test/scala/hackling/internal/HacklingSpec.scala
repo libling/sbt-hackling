@@ -2,6 +2,7 @@ package hackling
 package internal
 
 import hackling.Hackling._
+import hackling.internal.util._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
@@ -21,11 +22,11 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
   val dependencyHashInRepoWithDeps = "eb322e1d49604cf4d49986e14d0a0672d7c22094"
   val dependencyHashTransitive = "ef33ab5a6eac7af6b2f6a8d238ccdc88e25171a2"
 
-  def localDep(hash: String) = Dependency(Version(hash), Repositories(localRepoDir.toURI))
+  def localDep(hash: String) = Dependency(HashVersion(hash), Repositories(localRepoDir.toURI))
   val localDep1 = localDep(dependencyHash1)
   val localDep2 = localDep(dependencyHash2)
 
-  def remoteDep(hash: String, uri: URI) = Dependency(Version(hash), Repositories(uri))
+  def remoteDep(hash: String, uri: URI) = Dependency(HashVersion(hash), Repositories(uri))
   val remoteDep1 = remoteDep(dependencyHash1, remoteRepoURI)
   val remoteDepWithDependencies = remoteDep(dependencyHashInRepoWithDeps, remoteRepoWithDependenciesURI)
 
@@ -44,7 +45,7 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
 
       assert(cached.nonEmpty)
       assert(cached.exists {
-        case VersionCached(VersionHash(hash), cacheRepoDir, _) => hash == dependencyHash1 && cacheRepoDir == localRepoDir
+        case VersionCached(HashVersion(hash), cacheRepoDir, _) => hash == dependencyHash1 && cacheRepoDir == localRepoDir
       })
     }
   }
@@ -56,8 +57,10 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
       val cacheContents = (cache * DirectoryFilter).get
       assert(cacheContents.nonEmpty)
       assert {
-        val commit = ObjectId.fromString(remoteDep1.version.hash)
-        Git.open(cached.head.file).log().add(commit).call().iterator().hasNext
+        withRepo(cached.head.file) { git =>
+          val commit = ObjectId.fromString(remoteDep1.version.asInstanceOf[HashVersion].hash)
+          git.log().add(commit).call().iterator().hasNext
+        }
       }
     }
   }

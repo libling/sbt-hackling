@@ -55,8 +55,8 @@ Add this plugin:
 Add a libling source dependency:
        
     sourceDependencies += Dependency(
-            Version("<git commit long hash>"),
-            Repositories(uri("<https git repository uri>")))
+            HashVersion("<git commit long hash>"),
+            Repositories(uri("<https git  repository uri>")))
             
 On the sbt shell:
 
