@@ -73,6 +73,3 @@ object HacklingPlugin extends AutoPlugin {
   )
 
 }
-
-
-

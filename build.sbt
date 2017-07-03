@@ -56,7 +56,7 @@ bintrayDumpCredentials := {
 
   val dumped = for {
     user <- sys.env.get("BINTRAY_USER")
-    key <- sys.env.get("BINTRAY_KEY")
+    key <- sys.env.get("BINTRAY_PASS")
     if !bintrayCredentialsFile.value.isFile
   } yield {
     val credentials =
