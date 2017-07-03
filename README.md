@@ -1,5 +1,6 @@
 [![Gitter chat](https://badges.gitter.im/libling.svg)](https://gitter.im/libling/Lobby)
 [![Build Status](https://travis-ci.org/libling/sbt-hackling.svg?branch=master)](https://travis-ci.org/libling/sbt-hackling)
+[ ![Download](https://api.bintray.com/packages/jastice/sbt-plugins/sbt-hackling/images/download.svg) ](https://bintray.com/jastice/sbt-plugins/sbt-hackling/_latestVersion)
 
 # sbt-hackling
 
