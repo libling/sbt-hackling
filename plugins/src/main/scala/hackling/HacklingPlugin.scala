@@ -16,7 +16,7 @@ object HacklingPlugin extends AutoPlugin {
   object autoImport {
     type Version = hackling.Version
     val HashVersion = hackling.HashVersion
-    val TagVersion = hackling.NameVersion
+    val NameVersion = hackling.NameVersion
 
     val Repositories = hackling.Repositories
     val Dependency = hackling.Dependency
