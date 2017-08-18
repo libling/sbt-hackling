@@ -104,7 +104,7 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
 
       assert(installed.nonEmpty)
       assert(taskImpl.installedLibs(target).contains(dependencyHash1))
-      val allInTarget = target.***.get
+      val allInTarget = target.allPaths.get
       assert(installed.forall(f => allInTarget contains f))
       assert(installed.forall(_.isFile))
     }
@@ -114,7 +114,7 @@ class HacklingSpec extends FlatSpec with BeforeAndAfterAll {
     IO.withTemporaryDirectory { target =>
       val installed1 = installDepTo(target)
 
-      val allInTarget = target.***.get
+      val allInTarget = target.allPaths.get
 
       assert(installed1.forall(f => allInTarget contains f))
 

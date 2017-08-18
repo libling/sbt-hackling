@@ -173,7 +173,7 @@ private[hackling] object taskImpl {
 
   def resolve(cache: File)(deps: Seq[Dependency]): Seq[VersionCached] = {
     // TODO when resolving tags or branches, how to give preference to repos?
-    // TagVersion could explicitly define git uri?
+    // NameVersion could explicitly define git uri?
     val findCached = findCachedRepo(cache) _
     val transitive = transitiveResolve(cache) _
     for {

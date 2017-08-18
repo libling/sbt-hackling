@@ -5,10 +5,10 @@ jdk:
 
 script:
   ## runs both regular tests and sbt-scripted integration tests
-  - sbt -Dfile.encoding=UTF8 test scripted bintrayDumpCredentials
+  - sbt -Dfile.encoding=UTF8 test scripted
 
 after_success:
-  - '[[ $TRAVIS_BRANCH == "master" ]] || [[ $TRAVIS_BRANCH =~ ^v[0-9.]+$ ]] && sbt "such publish"'
+  - '[[ $TRAVIS_BRANCH == "master" ]] || [[ $TRAVIS_BRANCH =~ ^v[0-9.]+$ ]] && sbt "+ publish"'
 
 sudo: false
 
